@@ -33,7 +33,7 @@
   }
   function rollDay() {
     const k = dayKey();
-    if (S.daily.day !== k) S.daily = { day: k, newDone: 0, extraNew: 0 };
+    if (S.daily.day !== k) S.daily = { day: k, newDone: 0, extraNew: 0, newOther: 0 };
   }
 
   const get = (id) => S.cards[id];
@@ -95,6 +95,7 @@
     const c = schedule(prev, g, now);
     S.cards[id] = c;
     if (!prev && !id.includes('|')) S.daily.newDone += 1;
+    if (!prev && id.includes('|')) S.daily.newOther = (S.daily.newOther || 0) + 1;
     if (S.prio && S.prio.includes(id)) S.prio = S.prio.filter((x) => x !== id);
     const k = dayKey(); const L = S.log[k] || (S.log[k] = { n: 0, ok: 0, nw: 0, t: 0 });
     L.n += 1; if (g > 1) L.ok += 1; if (!prev) L.nw += 1; L.t += Math.min(ms || 0, 60000);
@@ -140,7 +141,8 @@
     const allowed = (id) => { const w = byW.get(id); return w && (!cats.length || cats.includes(w.c)) && (!lvs.length || lvs.includes(w.l)); };
     const newIds = prio.concat(nw.filter((id) => !id.includes('|') && !pset.has(id) && allowed(id)));
     const newRev = nw.filter((id) => id.includes('|'));
-    const newPick = newIds.slice(0, newLeft).concat(newRev.slice(0, Math.max(0, newLeft)));
+    const otherLeft = Math.max(0, st.newPerDay + (S.daily.extraNew || 0) - (S.daily.newOther || 0));
+    const newPick = newIds.slice(0, newLeft).concat(newRev.slice(0, otherLeft));
     rev.sort((a, b) => S.cards[a].due - S.cards[b].due);
     learn.sort((a, b) => S.cards[a].due - S.cards[b].due);
     return { learn, rev: rev.slice(0, st.maxRev), nw: opts.noNew ? [] : newPick, newLeft, totalNew: nw.length };
