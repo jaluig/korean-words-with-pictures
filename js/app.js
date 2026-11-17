@@ -116,12 +116,17 @@
     } catch (e) { /* ignore */ }
   }
   const shuffle = (a) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-  const speakBtn = (text, cls = '') => `<button class="icon-btn ${cls}" data-say="${esc(plain(text))}" title="듣기">🔊</button>`;
+  const speakBtn = (text, cls = '') => `<button class="icon-btn ${cls}" data-say="${esc(plain(text))}" title="듣기 (두 번 누르면 천천히 · press twice for slow)">🔊</button>`;
   function stateLabel(s) { return { new: '새 단어', learn: '학습 중', young: '복습 중', mature: '잘 알아요', known: '이미 알아요' }[s]; }
 
+  let lastSay = { t: '', at: 0 };
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-say]');
-    if (b) { e.preventDefault(); e.stopPropagation(); TTS.speak(b.dataset.say); }
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const now = Date.now(); const again = lastSay.t === b.dataset.say && now - lastSay.at < 2500;
+    TTS.speak(b.dataset.say, again ? { rate: 0.55 } : {});
+    lastSay = { t: again ? '' : b.dataset.say, at: now };
   });
 
   /* ---------- router ---------- */
