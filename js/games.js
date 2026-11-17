@@ -87,7 +87,7 @@
     if (g.id === 'cloze') items = items.filter((w) => w.ex.length && /\{/.test(w.ex[0]) && w.ex.some((s) => s.includes(`|${w.w}}`) || s.includes(`{${w.w}}`)));
     items = items.slice(0, N);
     if (!items.length) { app.innerHTML = '<div class="empty">문제가 없어요</div>'; return; }
-    let locked = false; let typedHint = 0; let alive = true;
+    let locked = false; let typedHint = 0; let alive = true; let ime = null;
     function draw() {
       locked = false; typedHint = 0;
       const w = items[i]; const opts = shuffle([w, ...distract(w, pool, 3)]);
@@ -107,12 +107,18 @@
         q = `<div class="panel" style="text-align:center;margin-bottom:14px"><div class="sent" style="font-size:24px">${A.clozeHTML(s, w.w)}</div></div>`;
         o = `<div class="opts">${opts.map((x) => `<button class="opt" data-a="${esc(x.w)}">${pic(x)}</button>`).join('')}</div>`;
       } else if (g.id === 'type') {
-        q = `<div class="q-pic">${pic(w)}</div><div class="sub" style="text-align:center">${Array.from(w.w).map(() => '◻︎').join(' ')}</div>`;
-        o = `<div class="type-in"><input type="text" id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" lang="ko" placeholder="한글로 쓰세요"><button class="btn pri" data-check>확인</button></div>
-             <div class="row" style="justify-content:center;margin-top:8px"><button class="btn sm ghost" data-hint>💡 힌트</button><button class="btn sm ghost" data-skip>모르겠어요</button></div>`;
+        q = `<div class="q-pic" style="width:min(52%,230px)">${pic(w)}</div><div class="sub" style="text-align:center">${Array.from(w.w).map(() => '◻︎').join(' ')}</div>`;
+        const kbOn = localStorage.getItem('kwp-kb') !== '0';
+        o = `<div class="type-in"><input type="text" id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" lang="ko" placeholder="한글로 쓰세요" ${kbOn ? 'inputmode="none"' : ''}><button class="btn pri" data-check>확인</button></div>
+             <div class="row" style="justify-content:center;margin-top:8px"><button class="btn sm ghost" data-hint>💡 힌트</button><button class="btn sm ghost" data-skip>모르겠어요</button><button class="btn sm ghost" data-kb>⌨️ ${kbOn ? '자판 숨기기' : '한글 자판'}</button></div>
+             <div class="kb" id="kb" ${kbOn ? '' : 'hidden'}></div>`;
       }
       app.innerHTML = `<div class="gamebox">${header(g, score, i + 1, items.length)}${q}${o}<div class="feedback" id="fb"></div></div>`;
-      const tin = $('#tin'); if (tin) { tin.focus(); tin.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) check(tin.value); }; }
+      const tin = $('#tin');
+      if (tin) {
+        ime = root.Hangul ? root.Hangul.attach(tin, $('#kb'), { onenter: (v) => check(v) }) : null;
+        tin.focus(); tin.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) check(tin.value); };
+      }
     }
     function after(ok, w, el) {
       locked = true;
@@ -142,7 +148,8 @@
         return after(ok, w, b);
       }
       if (e.target.closest('[data-check]')) return check($('#tin').value);
-      if (e.target.closest('[data-hint]')) { const w = items[i]; typedHint = Math.min(w.w.length, typedHint + 1); $('#tin').value = w.w.slice(0, typedHint); $('#tin').focus(); return; }
+      if (e.target.closest('[data-hint]')) { const w = items[i]; typedHint = Math.min(w.w.length, typedHint + 1); if (ime) ime.set(w.w.slice(0, typedHint)); else $('#tin').value = w.w.slice(0, typedHint); $('#tin').focus(); return; }
+      if (e.target.closest('[data-kb]')) { const on = localStorage.getItem('kwp-kb') === '0'; localStorage.setItem('kwp-kb', on ? '1' : '0'); const kb = $('#kb'); kb.hidden = !on; const t = $('#tin'); if (on) t.setAttribute('inputmode', 'none'); else t.removeAttribute('inputmode'); e.target.closest('[data-kb]').textContent = on ? '⌨️ 자판 숨기기' : '⌨️ 한글 자판'; t.focus(); return; }
       if (e.target.closest('[data-skip]')) { if (!locked) { $('#tin').value = items[i].w; after(false, items[i]); } }
     };
     const key = (e) => {

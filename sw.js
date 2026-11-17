@@ -5,7 +5,7 @@ self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); })
 self.addEventListener('fetch', (e) => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  const isImg = /\/img\//.test(url.pathname) || url.hostname.includes('gstatic');
+  const isImg = /\/img\/e\//.test(url.pathname) || url.hostname.includes('gstatic');
   e.respondWith(caches.open(CACHE).then(async (c) => {
     const hit = await c.match(req);
     if (hit && isImg) return hit;

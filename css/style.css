@@ -378,3 +378,11 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .sline-para { grid-template-columns: 110px 1fr; padding: 10px; }
 .sline-para .sent { font-size: 19px; }
 @media (max-width: 560px) { .sline-para { grid-template-columns: 84px 1fr; } .sline-para .pic-wrap { width: 100%; } }
+.kb { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 8px; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.kb-row { display: flex; gap: 5px; justify-content: center; margin: 5px 0; }
+.kb-k { flex: 1; max-width: 52px; height: 46px; border: 0; border-radius: 10px; background: var(--bg); color: var(--ink); font: 500 20px var(--font); cursor: pointer; box-shadow: 0 2px 0 var(--line); padding: 0; }
+.kb-k:active { transform: translateY(1px); box-shadow: none; background: var(--pri-soft); }
+.kb-k.wide { max-width: 70px; font-size: 18px; }
+.kb-k.on { background: var(--pri); color: #fff; }
+.kb-k.space { max-width: 220px; font-size: 14px; color: var(--ink3); }
+.kb-k.ok { max-width: 90px; background: var(--pri); color: #fff; font-size: 15px; font-weight: 700; }
