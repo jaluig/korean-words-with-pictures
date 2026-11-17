@@ -22,6 +22,7 @@
     const st = (root.STORIES || []).find((s) => s.id === id);
     if (!st) { app.innerHTML = '<div class="empty">없어요</div>'; return; }
     const all = st.p.map((p) => A.plain(p.s)).join(' ');
+    SRS.state.read = SRS.state.read || {}; SRS.state.read[st.id] = Date.now(); SRS.save();
     app.innerHTML = `<div class="story">
       <div class="row"><a class="icon-btn sm" href="#/read">←</a><h1 class="grow" style="margin:0">${esc(st.t)}</h1><button class="btn" data-playall>▶ 전체 듣기</button></div>
       ${st.p.map((p, i) => `<div class="para" data-i="${i}"><div class="pic-wrap">${Scene.render(p.pic, { seed: st.id + i, lazy: true })}</div><div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div class="sent grow">${A.sentHTML(p.s)}</div>${speakBtn(p.s, 'sm')}</div></div>`).join('')}

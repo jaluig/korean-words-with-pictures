@@ -73,6 +73,7 @@
       <div class="row" style="justify-content:center;margin-top:18px"><button class="btn pri" data-again>다시 하기 🔁</button><a class="btn" href="#/games">다른 게임</a></div>
     </div></div>`;
     if (score >= n * 0.8) confetti();
+    if (score === n && n >= 5) { SRS.state.ach = SRS.state.ach || {}; SRS.state.ach.perfect = true; SRS.save(); }
     app.onclick = (e) => {
       const o = e.target.closest('[data-open]'); if (o) A.openWord(o.dataset.open);
       if (e.target.closest('[data-again]')) A.go(location.hash);

@@ -212,6 +212,7 @@
           <div class="tile"><b>${today.n || 0}</b><span>오늘 복습</span></div>
           <div class="tile"><b>${learned}</b><span>배운 단어</span></div>
         </div>
+        <a class="ach-link" href="#/stats">🏅 업적 ${achievements().filter((a) => a[3]).length}/${achievements().length} →</a>
         <h2 style="margin-top:18px">단계 <span class="en">Levels</span></h2>
         ${Object.keys(lv).sort((a, b) => a - b).map((k) => { const L = lv[k]; const p = (x) => (x / L.t) * 100; return `<div class="lvl"><b>${k}단계</b><div class="bar"><i class="b-m" style="width:${p(L.m)}%"></i><i class="b-y" style="width:${p(L.y)}%"></i><i class="b-l" style="width:${p(L.l)}%"></i></div><span class="muted">${L.m + L.y}/${L.t}</span></div>`; }).join('')}
       </section>
@@ -400,6 +401,40 @@
     refresh();
   };
 
+  /* ---------- achievements ---------- */
+  function achievements() {
+    const S = SRS.state; const words = orderedWords();
+    const st = (w) => SRS.wordState(w.w);
+    const learned = words.filter((w) => ['young', 'mature', 'known'].includes(st(w))).length;
+    const mature = words.filter((w) => st(w) === 'mature').length;
+    const totalRev = Object.values(S.log).reduce((a, b) => a + b.n, 0);
+    const streak = SRS.streak(); if (streak > (S.bestStreak || 0)) { S.bestStreak = streak; SRS.save(); }
+    const best = S.bestStreak || 0;
+    const fullCats = Object.keys(CATS).filter((c) => { const ws = words.filter((w) => w.c === c); return ws.length >= 5 && ws.every((w) => ['young', 'mature', 'known'].includes(st(w))); });
+    const reads = Object.keys(S.read || {}).length; const ach = S.ach || {};
+    const lvDone = (l) => { const ws = words.filter((w) => w.l === l); return ws.length && ws.every((w) => ['young', 'mature', 'known'].includes(st(w))); };
+    return [
+      ['👣', '첫 걸음', 'First review', totalRev >= 1],
+      ['🌱', '새싹', '10 words learned', learned >= 10],
+      ['🌿', '쑥쑥', '50 words learned', learned >= 50],
+      ['🌳', '나무', '100 words learned', learned >= 100],
+      ['🏅', '메달', '250 words learned', learned >= 250],
+      ['🏆', '트로피', '500 words learned', learned >= 500],
+      ['👑', '단어 왕', 'Every word learned', learned >= words.length],
+      ['🔥', '3일 연속', '3-day streak', best >= 3],
+      ['⭐', '일주일', '7-day streak', best >= 7],
+      ['🌟', '한 달', '30-day streak', best >= 30],
+      ['💎', '백 일', '100-day streak', best >= 100],
+      ['📚', '복습 100', '100 reviews', totalRev >= 100],
+      ['🎓', '복습 1000', '1,000 reviews', totalRev >= 1000],
+      ['🧠', '튼튼한 기억', '50 mature words (21+ days)', mature >= 50],
+      ['🥇', '1단계 완료', 'All of level 1', lvDone(1)],
+      ['🗂️', '주제 완료', 'Every word in one topic', fullCats.length >= 1],
+      ['📖', '책벌레', 'Read 5 stories', reads >= 5],
+      ['💯', '만점', 'Perfect game score', !!ach.perfect]
+    ];
+  }
+
   /* ================= STATS ================= */
   views.stats = (app) => {
     const words = orderedWords(); const S = SRS.state;
@@ -431,6 +466,8 @@
         <div class="chart">${fc.map((n, i) => `<div class="col"><b>${n || ''}</b><i style="height:${(n / mx) * 100}%"></i><span>${i === 0 ? '오늘' : `+${i}`}</span></div>`).join('')}</div></section>
       <section class="panel"><h2>지난 14일 <span class="en">Reviews</span></h2>
         <div class="chart">${past.map((p) => `<div class="col"><b>${p.n || ''}</b><i style="height:${(p.n / pm) * 100}%"></i><span>${p.k.slice(8)}</span></div>`).join('')}</div></section>
+      <section class="panel"><h2>업적 <span class="en">Achievements ${achievements().filter((a) => a[3]).length}/${achievements().length}</span></h2>
+        <div class="ach">${achievements().map(([e, t, en, ok]) => `<div class="ach-i ${ok ? 'ok' : ''}" title="${esc(en)}"><div class="ach-e">${Scene.render(`${e} 50 50 76${ok ? ' b' : ' g o.35'}`, { cls: 'still-bg' })}</div><b>${t}</b><span>${en}</span></div>`).join('')}</div></section>
       <section class="panel"><h2>공부 기록</h2>${heatmap(26)}</section>
       </div>`;
   };
@@ -530,5 +567,5 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  root.App = { start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
+  root.App = { achievements, start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
 })(window);
