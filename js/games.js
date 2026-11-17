@@ -5,7 +5,7 @@
 
   const GAMES = [
     { id: 'pic', name: '그림 고르기', sub: '단어를 보고 그림을 골라요', icon: '🖼️ 50 50 80' },
-    { id: 'word', name: '단어 고르기', sub: '그림을 보고 단어를 골라요', icon: '🔤 50 50 80' },
+    { id: 'word', name: '단어 고르기', sub: '그림을 보고 단어를 골라요', icon: '💬 50 50 80' },
     { id: 'listen', name: '듣고 고르기', sub: '듣고 그림을 골라요', icon: '🎧 50 50 80' },
     { id: 'cloze', name: '빈칸 채우기', sub: '예문의 빈칸에 맞는 그림', icon: '🧩 50 50 80' },
     { id: 'memory', name: '짝 맞추기', sub: '단어와 그림 짝을 찾아요', icon: '🃏 50 50 80' },
