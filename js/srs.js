@@ -48,7 +48,7 @@
       c.due = dayStart(now) + c.ivl * DAY;
     };
     if (c.s === 'new' || c.s === 'learn' || c.s === 'relearn') {
-      const steps = c.s === 'relearn' ? st.relearnSteps : st.learnSteps;
+      const steps = (c.s === 'relearn' ? st.relearnSteps : st.learnSteps) || [10];
       const relearn = c.s === 'relearn';
       if (c.s === 'new') { c.s = 'learn'; c.step = 0; c.ease = 2.5; c.first = now; }
       if (g === 1) { c.step = 0; c.due = now + steps[0] * MIN; } else if (g === 2) {
@@ -83,7 +83,7 @@
   }
   function preview(id) {
     const now = Date.now(); const c = S.cards[id];
-    return [1, 2, 3, 4].map((g) => { const n = schedule(c, g, now); return fmt(n.due - now); });
+    return [1, 2, 3, 4].map((g) => { const n = schedule(c, g, now); return n.s === 'rev' ? (n.ivl < 31 ? `${n.ivl}일` : fmt(n.ivl * DAY)) : fmt(n.due - now); });
   }
 
   let undoStack = [];
@@ -111,13 +111,23 @@
 
   /** card list for a set of words, respecting enabled card types. Reverse cards unlock once the forward card is in review. */
   function allCardIds(words) {
-    const st = S.settings; const out = [];
+    const st = S.settings; const out = []; const today = dayKey();
+    const doneToday = (id) => { const c = S.cards[id]; return !!(c && c.last && dayKey(c.last) === today); };
     for (const w of words) {
       if (S.known[w.w]) continue;
-      const fwd = S.cards[w.w]; const grad = !st.recog || (fwd && fwd.s !== 'learn' && fwd.s !== 'new');
-      if (st.recog) out.push(w.w);
-      if (st.prod && (grad || S.cards[w.w + '|r'])) out.push(w.w + '|r');
-      if (st.listen && (grad || S.cards[w.w + '|l'])) out.push(w.w + '|l');
+      const fwd = S.cards[w.w]; const grad = !st.recog || (fwd && (fwd.s === 'rev' || fwd.s === 'relearn'));
+      const ids = [];
+      if (st.recog) ids.push(w.w);
+      if (st.prod && (grad || S.cards[w.w + '|r'])) ids.push(w.w + '|r');
+      if (st.listen && (grad || S.cards[w.w + '|l'])) ids.push(w.w + '|l');
+      const sib = [w.w, w.w + '|r', w.w + '|l'];
+      for (const id of ids) {
+        const c = S.cards[id];
+        const learning = c && (c.s === 'learn' || c.s === 'relearn');
+        // "bury siblings": once one card of a word was studied today, its other cards wait until tomorrow
+        if (!learning && sib.some((x) => x !== id && doneToday(x))) continue;
+        out.push(id);
+      }
     }
     return out;
   }

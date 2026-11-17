@@ -285,26 +285,32 @@
   views.study = (app) => {
     const words = orderedWords();
     let q = null; let cur = null; let flipped = false; let shownAt = 0; let doneCount = 0; let startTotal = 0; let typed = null;
+    let ahead = false; let lastId = null; let waitT = null;
     function build() { q = SRS.queue(words); startTotal = startTotal || (q.nw.length + q.learn.length + q.rev.length); }
     function pick() {
       build();
       const now = Date.now();
       const dueLearn = q.learn.filter((id) => SRS.get(id).due <= now);
       // interleave: learning due first, then mix new into reviews
-      if (dueLearn.length) return dueLearn[0];
+      const notLast = (arr) => arr.find((id) => id !== lastId) || null;
+      // a learning card that just came due is shown first — but never the same card twice in a row if anything else is available
+      if (dueLearn.length) { const d = notLast(dueLearn); if (d) return d; }
       const ratio = q.rev.length && q.nw.length ? (doneCount % 3 === 2) : !q.rev.length;
       if (q.nw.length && (ratio || !q.rev.length)) return q.nw[0];
       if (q.rev.length) return q.rev[0];
       if (q.nw.length) return q.nw[0];
-      if (q.learn.length) { const soon = q.learn.filter((id) => SRS.get(id).due <= now + 20 * SRS.MIN); if (soon.length) return soon[0]; }
+      if (dueLearn.length) return dueLearn[0];
+      // only waiting learning cards left: show them early only after the user chose "지금 계속하기"
+      if (ahead && q.learn.length) return notLast(q.learn) || q.learn[0];
       return null;
     }
     function counts() {
       return `<div class="cnts"><span class="c-n ${cur && !SRS.get(cur) ? 'cur' : ''}">${q.nw.length}</span><span class="c-l ${cur && SRS.get(cur) && /learn/.test(SRS.get(cur).s) ? 'cur' : ''}">${q.learn.length}</span><span class="c-r ${cur && SRS.get(cur) && SRS.get(cur).s === 'rev' ? 'cur' : ''}">${q.rev.length}</span></div>`;
     }
     function next() {
+      clearTimeout(waitT);
       cur = pick(); flipped = false; typed = null;
-      if (!cur) return finish();
+      if (!cur) return (q.learn.length ? pause() : finish());
       shownAt = Date.now();
       draw();
       const w = DICT.get(cur.split('|')[0]);
@@ -335,7 +341,7 @@
       const pv = flipped ? SRS.preview(cur) : null;
       app.innerHTML = `<div class="study">
         <div class="study-top"><a class="icon-btn sm" href="#/" title="홈">←</a><div class="progress"><i style="width:${pct}%"></i></div>${counts()}</div>
-        <div class="card ${anim ? 'flip' : ''}">${body}</div>
+        <div class="card ${anim ? 'flip' : ''}"><span class="ctype">${isListen ? '🔊 → 🖼️' : isRev ? '🖼️ → 가' : '가 → 🖼️'}</span>${body}</div>
         ${flipped
     ? `<div class="answers">
             <button class="g1" data-g="1">다시<small>${pv[0]}</small></button>
@@ -365,8 +371,25 @@
     }
     function grade(g) {
       if (!flipped) return;
-      SRS.answer(cur, g, Date.now() - shownAt); doneCount++;
+      SRS.answer(cur, g, Date.now() - shownAt); doneCount++; lastId = cur;
       next();
+    }
+    /* only learning cards are left and none is due yet: take a break, resume automatically */
+    function pause() {
+      const soon = Math.min(...q.learn.map((id) => SRS.get(id).due));
+      const wait = Math.max(0, soon - Date.now());
+      app.innerHTML = `<div class="study"><div class="panel done">
+        <div class="big-emo">${Scene.render('☕ 50 54 70 | ♨️ 50 18 20 fl', { cls: 'still-bg' })}</div>
+        <h1>잠깐 쉬어요!</h1>
+        <p class="sub">새 카드는 다 봤어요. 방금 배운 카드 <b>${q.learn.length}장</b>이 <b>${SRS.fmt(wait)}</b> 후에 다시 나와요.<br><span class="en">You've seen today's new cards. The ${q.learn.length} cards you just learned come back in ${Math.max(1, Math.round(wait / 60000))} min — this page continues by itself, or start now.</span></p>
+        <div class="row" style="justify-content:center;margin-top:16px">
+          <button class="btn pri" data-ahead>지금 계속하기 ▶</button>
+          <a class="btn" href="#/games">게임 하기 🎮</a>
+          <a class="btn" href="#/">끝내기</a>
+        </div>
+      </div></div>`;
+      clearTimeout(waitT);
+      waitT = setTimeout(() => { if (app.isConnected && !cur) next(); }, wait + 500);
     }
     function finish() {
       build();
@@ -397,6 +420,7 @@
       if (e.target.closest('[data-undo]')) { const id = SRS.undo(); if (id) { doneCount = Math.max(0, doneCount - 1); build(); cur = id; flipped = false; shownAt = Date.now(); draw(); toast('되돌렸어요'); } return; }
       if (e.target.closest('[data-info]')) { if (cur) openWord(cur.split('|')[0]); return; }
       if (e.target.closest('[data-more]')) { SRS.addExtraNew(10); next(); return; }
+      if (e.target.closest('[data-ahead]')) { ahead = true; next(); return; }
       const op = e.target.closest('[data-open]'); if (op) { openWord(op.dataset.open); return; }
       if (!flipped && cur && e.target.closest('.card') && !e.target.closest('.type-in, .kb')) flip();
     };
@@ -408,7 +432,7 @@
     };
     document.addEventListener('keydown', key);
     next();
-    return () => document.removeEventListener('keydown', key);
+    return () => { clearTimeout(waitT); document.removeEventListener('keydown', key); };
   };
 
   /* ================= WORDS ================= */
@@ -561,6 +585,7 @@
       <div class="set-row"><label>하루 최대 복습<span class="sub">Max reviews per day</span></label><input type="number" min="10" max="9999" id="s-rev" value="${s.maxRev}" style="width:90px"></div>
       ${sw('recog', '단어 → 그림 카드', 'Recognition: see word, recall picture')}
       ${sw('prod', '그림 → 단어 카드', 'Production: see picture, recall word (unlocks after the first card is learned)')}
+      <div class="set-row"><label>학습 단계<span class="sub">How often a new card repeats before it waits a day</span></label><select id="s-steps">${[['1,10', '1분 → 10분 (Anki)'], ['10', '10분 (적게 · fewer repeats)'], ['1', '1분 (빠르게)']].map(([v, l]) => `<option value="${v}" ${String(s.learnSteps) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="set-row"><label>새 카드 순서<span class="sub">New card order</span></label><select id="s-order">${[['level', '단계순 (Level order)'], ['random', '섞기 (Shuffled)']].map(([v, l]) => `<option value="${v}" ${s.order === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       ${sw('typeRev', '그림 → 단어: 직접 쓰기', 'Type the answer on picture→word cards (built-in Hangul keyboard)')}
       ${sw('listen', '듣기 카드', 'Listening: hear the word, recall the picture (unlocks after the first card is learned)')}
@@ -616,6 +641,7 @@
       if (t.id === 's-theme') s.theme = t.value;
       if (t.id === 's-font') s.font = t.value;
       if (t.id === 's-order') s.order = t.value;
+      if (t.id === 's-steps') s.learnSteps = t.value.split(',').map(Number);
       if (t.id === 's-imp' && t.files[0]) {
         const r = new FileReader();
         r.onload = () => { try { SRS.importJSON(r.result); toast('가져왔어요 ✓'); route(); } catch (err) { toast('파일을 읽을 수 없어요'); } };
