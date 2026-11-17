@@ -6,11 +6,11 @@ A personal Korean vocabulary trainer with **no translations**: every word is lea
   Rate yourself with 다시 / 어려움 / 알맞음 / 쉬움 and the card comes back at the right time.
   Optional reverse cards (picture → word) unlock once a word is learned.
 - 🔍 **Hover pictures in sentences** — every dotted word in an example sentence shows its own picture when you hover (or tap) it. Tap again to open that word.
-- 📖 **Picture stories** — 35 short stories made from the word list, with hover pictures, read-aloud and a story quiz
+- 📖 **Picture stories** — 40 short stories made from the word list, with hover pictures, read-aloud and a story quiz
   (match each sentence to its scene). Plus a page of random example sentences for the words you already know.
-- 🎮 **Games** — picture quiz, word quiz, listening quiz, sentence gap-fill, memory pairs, typing, 60-second speed O/X
+- 🎮 **Games** — picture quiz, word quiz, listening quiz, sentence gap-fill, memory pairs, typing, 60-second speed O/X, find-the-opposite
   and sentence building (put the word blocks in order).
-- 🧠 **About 1,170 words in 12 levels**, roughly ordered by how common and how easy to picture they are, each with 2–3 example sentences.
+- 🧠 **About 1,190 words in 13 levels**, roughly ordered by how common and how easy to picture they are, each with 2–3 example sentences.
 - 🎧 Optional listening cards (hear → recall the picture), "learn this word now", choose topics/levels for new cards.
 - 📝 Personal notes per word, 🏅 achievements, and a 🏳️ "picture is confusing" flag (Settings shows the list to copy).
 - 🔊 Korean audio via your browser's text-to-speech (install a Korean voice in your OS if you hear nothing). Press 🔊 twice to hear it slowly.
