@@ -18,6 +18,7 @@
     const all = A.words;
     const learned = all.filter((w) => SRS.wordState(w.w) !== 'new');
     if (mode === 'learned') return learned;
+    if (mode === 'hard') { const h = A.hardWords(40); return h.length >= 4 ? h : learned; }
     if (mode === 'all') return all;
     if (mode && mode.startsWith('c:')) return all.filter((w) => w.c === mode.slice(2));
     if (mode && mode.startsWith('l:')) return all.filter((w) => String(w.l) === mode.slice(2));
@@ -51,7 +52,7 @@
     app.innerHTML = `<h1>게임 <span class="en">Games</span></h1>
       <div class="row" style="margin-bottom:16px"><span class="sub">단어:</span>
         <select id="gpool">
-          <option value="">자동 (배운 단어)</option><option value="learned">배운 단어만</option><option value="all">모든 단어</option>
+          <option value="">자동 (배운 단어)</option><option value="learned">배운 단어만</option><option value="hard">자주 틀리는 단어</option><option value="all">모든 단어</option>
           ${[...new Set(A.words.map((w) => w.l))].sort().map((l) => `<option value="l:${l}">${l}단계</option>`).join('')}
           ${cats.map((c) => `<option value="c:${c}">${A.CATS[c][1]} ${A.CATS[c][0]}</option>`).join('')}
         </select><span class="sub" id="gcount"></span></div>

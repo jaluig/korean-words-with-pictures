@@ -227,6 +227,8 @@
       <div class="wotd"><div data-open="${esc(wotd.w)}" style="cursor:pointer">${pic(wotd)}</div>
       <div><div class="w">${esc(wotd.w)} ${speakBtn(wotd.w, 'sm')}</div>${wotd.ex[0] ? `<div class="sent">${sentHTML(wotd.ex[0], wotd.w)}</div>` : ''}</div></div>
     </section>` : ''}
+    ${(() => { const st = suggestStory(); return st ? `<section class="panel" style="margin-top:18px"><h2>오늘의 이야기 <span class="en">Story for you</span></h2>
+      <a class="story-card" href="#/story/${encodeURIComponent(st.id)}" style="box-shadow:none">${Scene.render(st.cover || st.p[0].pic, { seed: st.id })}<div class="st"><b>${esc(st.t)}</b><span>${st.l || 1}단계 · ${st.p.length}장면</span></div></a></section>` : ''; })()}
     <section style="margin-top:18px" class="quick">
       <a href="#/words"><span class="qi">📚</span><b>단어장</b><span>${words.length}개 단어 · Browse</span></a>
       <a href="#/read"><span class="qi">📖</span><b>읽기</b><span>그림 이야기 · Stories</span></a>
@@ -428,6 +430,24 @@
     refresh();
   };
 
+  function hardWords(n = 12) {
+    const S = SRS.state;
+    return WORDLIST.map((w) => { const a = S.cards[w.w] || {}; const b = S.cards[w.w + '|r'] || {}; const c = S.cards[w.w + '|l'] || {}; return { w, l: (a.lapses || 0) + (b.lapses || 0) + (c.lapses || 0), e: Math.min(a.ease || 9, b.ease || 9, c.ease || 9) }; })
+      .filter((x) => x.l > 0 || x.e < 2.2).sort((a, b) => (b.l - a.l) || (a.e - b.e)).slice(0, n).map((x) => x.w);
+  }
+  function suggestStory() {
+    const read = SRS.state.read || {}; const list = (root.STORIES || []).filter((s) => !read[s.id]);
+    let best = null; let bestScore = -1;
+    for (const st of list) {
+      const lem = new Set(); st.p.forEach((p) => String(p.s).replace(TOK, (m, f, l) => { lem.add(l || f); return m; }));
+      const arr = [...lem].filter((l) => DICT.has(l)); if (!arr.length) continue;
+      const known = arr.filter((l) => SRS.wordState(l) !== 'new').length / arr.length;
+      const score = known - (st.l || 1) * 0.01;
+      if (score > bestScore) { bestScore = score; best = st; }
+    }
+    return best;
+  }
+
   /* ---------- achievements ---------- */
   function achievements() {
     const S = SRS.state; const words = orderedWords();
@@ -493,10 +513,14 @@
         <div class="chart">${fc.map((n, i) => `<div class="col"><b>${n || ''}</b><i style="height:${(n / mx) * 100}%"></i><span>${i === 0 ? '오늘' : `+${i}`}</span></div>`).join('')}</div></section>
       <section class="panel"><h2>지난 14일 <span class="en">Reviews</span></h2>
         <div class="chart">${past.map((p) => `<div class="col"><b>${p.n || ''}</b><i style="height:${(p.n / pm) * 100}%"></i><span>${p.k.slice(8)}</span></div>`).join('')}</div></section>
+      ${hardWords().length ? `<section class="panel"><h2>자주 틀리는 단어 <span class="en">Words you often miss</span></h2>
+        <div class="wgrid" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr))">${hardWords().map((w) => `<div class="wcard" data-open="${esc(w.w)}">${pic(w, { lazy: true })}<div class="ww" style="font-size:15px">${esc(w.w)}</div></div>`).join('')}</div>
+        <div class="row" style="margin-top:12px"><a class="btn sm" href="#/games" onclick="sessionStorage.setItem('kwp-gpool','hard')">🎮 이 단어로 게임하기</a></div></section>` : ''}
       <section class="panel"><h2>업적 <span class="en">Achievements ${achievements().filter((a) => a[3]).length}/${achievements().length}</span></h2>
         <div class="ach">${achievements().map(([e, t, en, ok]) => `<div class="ach-i ${ok ? 'ok' : ''}" title="${esc(en)}"><div class="ach-e">${Scene.render(`${e} 50 50 76${ok ? ' b' : ' g o.35'}`, { cls: 'still-bg' })}</div><b>${t}</b><span>${en}</span></div>`).join('')}</div></section>
       <section class="panel"><h2>공부 기록</h2>${heatmap(26)}</section>
       </div>`;
+    app.onclick = (e) => { const o = e.target.closest('[data-open]'); if (o) openWord(o.dataset.open); };
   };
 
   /* ================= SETTINGS ================= */
@@ -605,5 +629,5 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  root.App = { achievements, start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
+  root.App = { hardWords, achievements, start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
 })(window);
