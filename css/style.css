@@ -390,3 +390,4 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .typed.ok { background: #dcfce7; color: #15803d; }
 .typed.no { background: #fee2e2; color: #b91c1c; }
 .study .show-btn.nosticky { position: static; }
+.wgrid .wcard { content-visibility: auto; contain-intrinsic-size: 140px 190px; }

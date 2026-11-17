@@ -406,12 +406,17 @@
       sessionStorage.setItem('kwp-wf', JSON.stringify(f));
       const list = words.filter((w) => (!f.cat || w.c === f.cat) && (!f.lv || String(w.l) === String(f.lv)) && (!f.st || SRS.wordState(w.w) === f.st) && (!f.q || w.w.includes(f.q) || w.ex.some((s) => plain(s).includes(f.q))));
       const card = (w) => `<div class="wcard" data-open="${esc(w.w)}"><i class="dot ${SRS.wordState(w.w)}"></i>${pic(w, { lazy: true })}<div class="ww">${esc(w.w)}</div></div>`;
-      let html = '';
-      if (!list.length) html = '<div class="empty">단어가 없어요 🫥</div>';
+      const parts = [];
+      if (!list.length) parts.push('<div class="empty">단어가 없어요 🫥</div>');
       else if (!f.cat && !f.q) {
-        for (const c of cats) { const ws = list.filter((w) => w.c === c); if (ws.length) html += `<h2 class="cat-title">${CATS[c][1]} ${CATS[c][0]} <span class="muted" style="font-size:14px">${ws.length}</span></h2><div class="wgrid">${ws.map(card).join('')}</div>`; }
-      } else html = `<div class="wgrid">${list.map(card).join('')}</div>`;
-      const el = $('#wlist'); el.innerHTML = html; el.classList.toggle('hide-words', f.hide);
+        for (const c of cats) { const ws = list.filter((w) => w.c === c); if (ws.length) parts.push(`<h2 class="cat-title">${CATS[c][1]} ${CATS[c][0]} <span class="muted" style="font-size:14px">${ws.length}</span></h2><div class="wgrid">${ws.map(card).join('')}</div>`); }
+      } else { for (let i = 0; i < list.length; i += 60) parts.push(`<div class="wgrid" style="margin-bottom:12px">${list.slice(i, i + 60).map(card).join('')}</div>`); }
+      const el = $('#wlist'); el.classList.toggle('hide-words', f.hide);
+      const token = (refresh.token = (refresh.token || 0) + 1);
+      el.innerHTML = parts.slice(0, 2).join('');
+      let k = 2;
+      const more = () => { if (token !== refresh.token || !el.isConnected) return; if (k < parts.length) { el.insertAdjacentHTML('beforeend', parts.slice(k, k + 2).join('')); k += 2; setTimeout(more, 16); } };
+      setTimeout(more, 30);
     }
     views.words.refresh = refresh;
     $('#wq').oninput = (e) => { f.q = e.target.value.trim(); refresh(); };
