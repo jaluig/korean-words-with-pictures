@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const synth = root.speechSynthesis;
-  let voices = [];
+  let voices = []; let warned = false;
   function load() {
     if (!synth) return;
     voices = synth.getVoices().filter((v) => /^ko/i.test(v.lang));
@@ -19,6 +19,7 @@
 
   function speak(text, opts = {}) {
     if (!synth || !text) return;
+    if (!voices.length && !warned && root.App) { warned = true; setTimeout(() => { if (!voices.length && synth.getVoices().length) root.App.toast('한국어 음성이 없어요 — add a Korean voice in your system settings', 3500); }, 600); }
     try {
       synth.cancel();
       const u = new SpeechSynthesisUtterance(text);

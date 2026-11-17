@@ -4,7 +4,7 @@
   const KEY = 'kwp-v1';
   const MIN = 60 * 1000; const DAY = 24 * 60 * MIN; const DAY_START_HOUR = 4;
   const DEFAULTS = {
-    newPerDay: 15, maxRev: 300, recog: true, prod: true, autoplay: true, autoplayBack: false,
+    newPerDay: 15, maxRev: 300, recog: true, prod: true, listen: false, autoplay: true, autoplayBack: false, newCats: [], newLv: [],
     rate: 0.85, voice: '', anim: true, theme: 'auto', font: 'sans', learnSteps: [1, 10], relearnSteps: [10],
     order: 'level', sfx: true, showAllSentences: true
   };
@@ -94,7 +94,8 @@
     if (undoStack.length > 20) undoStack.shift();
     const c = schedule(prev, g, now);
     S.cards[id] = c;
-    if (!prev && !id.endsWith('|r')) S.daily.newDone += 1;
+    if (!prev && !id.includes('|')) S.daily.newDone += 1;
+    if (S.prio && S.prio.includes(id)) S.prio = S.prio.filter((x) => x !== id);
     const k = dayKey(); const L = S.log[k] || (S.log[k] = { n: 0, ok: 0, nw: 0, t: 0 });
     L.n += 1; if (g > 1) L.ok += 1; if (!prev) L.nw += 1; L.t += Math.min(ms || 0, 60000);
     save();
@@ -112,8 +113,10 @@
     const st = S.settings; const out = [];
     for (const w of words) {
       if (S.known[w.w]) continue;
+      const fwd = S.cards[w.w]; const grad = !st.recog || (fwd && fwd.s !== 'learn' && fwd.s !== 'new');
       if (st.recog) out.push(w.w);
-      if (st.prod && (!st.recog || (S.cards[w.w] && S.cards[w.w].s !== 'learn' && S.cards[w.w].s !== 'new') || S.cards[w.w + '|r'])) out.push(w.w + '|r');
+      if (st.prod && (grad || S.cards[w.w + '|r'])) out.push(w.w + '|r');
+      if (st.listen && (grad || S.cards[w.w + '|l'])) out.push(w.w + '|l');
     }
     return out;
   }
@@ -131,8 +134,12 @@
     }
     // reverse cards: introduce them as "new" too but they don't count against the new limit too harshly
     const newLeft = Math.max(0, st.newPerDay + (S.daily.extraNew || 0) - S.daily.newDone);
-    const newIds = nw.filter((id) => !id.endsWith('|r'));
-    const newRev = nw.filter((id) => id.endsWith('|r'));
+    const byW = new Map(words.map((w) => [w.w, w]));
+    const prio = (S.prio || []).filter((id) => nw.includes(id)); const pset = new Set(prio);
+    const cats = st.newCats || []; const lvs = st.newLv || [];
+    const allowed = (id) => { const w = byW.get(id); return w && (!cats.length || cats.includes(w.c)) && (!lvs.length || lvs.includes(w.l)); };
+    const newIds = prio.concat(nw.filter((id) => !id.includes('|') && !pset.has(id) && allowed(id)));
+    const newRev = nw.filter((id) => id.includes('|'));
     const newPick = newIds.slice(0, newLeft).concat(newRev.slice(0, Math.max(0, newLeft)));
     rev.sort((a, b) => S.cards[a].due - S.cards[b].due);
     learn.sort((a, b) => S.cards[a].due - S.cards[b].due);
@@ -159,6 +166,7 @@
     return c.ivl >= 21 ? 'mature' : 'young';
   }
 
+  function prioritize(w) { S.prio = (S.prio || []).filter((x) => x !== w); S.prio.unshift(w); rollDay(); if (S.daily.newDone >= S.settings.newPerDay + (S.daily.extraNew || 0)) S.daily.extraNew = (S.daily.extraNew || 0) + 1; save(); }
   function markKnown(w, on) { if (on) S.known[w] = Date.now(); else delete S.known[w]; save(); }
   function reset(w) { delete S.cards[w]; delete S.cards[w + '|r']; delete S.known[w]; save(); }
   function addExtraNew(n) { rollDay(); S.daily.extraNew = (S.daily.extraNew || 0) + n; save(); }
@@ -169,6 +177,6 @@
 
   root.SRS = {
     get state() { return S; }, get settings() { return S.settings; }, save, get, stateOf, answer, undo, preview, queue, counts,
-    streak, wordState, markKnown, reset, addExtraNew, exportJSON, importJSON, wipe, dayKey, fmt, DAY, MIN, rollDay
+    streak, wordState, markKnown, prioritize, reset, addExtraNew, exportJSON, importJSON, wipe, dayKey, fmt, DAY, MIN, rollDay
   };
 })(window);

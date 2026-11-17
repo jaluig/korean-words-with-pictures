@@ -142,7 +142,14 @@
       if (e.target.closest('[data-hint]')) { const w = items[i]; typedHint = Math.min(w.w.length, typedHint + 1); $('#tin').value = w.w.slice(0, typedHint); $('#tin').focus(); return; }
       if (e.target.closest('[data-skip]')) { if (!locked) { $('#tin').value = items[i].w; after(false, items[i]); } }
     };
+    const key = (e) => {
+      if (e.target.matches('input')) return;
+      if (/^[1-4]$/.test(e.key)) { const b = app.querySelectorAll('.opt')[+e.key - 1]; if (b) b.click(); }
+      if (e.key === 'r') { const w = items[i]; if (w) TTS.speak(w.w); }
+    };
+    document.addEventListener('keydown', key);
     draw();
+    return () => document.removeEventListener('keydown', key);
   }
 
   /* ---- memory ---- */

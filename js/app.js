@@ -158,6 +158,7 @@
       <div class="stack">${w.ex.map((s) => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div class="sent grow">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
       <div class="sub" style="margin-top:12px">${due}</div>
       <div class="row" style="margin-top:12px">
+        ${st === 'new' ? '<button class="btn sm pri" data-learn>지금 배우기 ▶</button>' : ''}
         ${st === 'known' ? '<button class="btn sm" data-unknown>다시 공부하기</button>' : '<button class="btn sm" data-known>이미 알아요 ✓</button>'}
         ${c ? '<button class="btn sm ghost" data-reset>초기화</button>' : ''}
       </div>
@@ -167,6 +168,7 @@
     m.onclick = (e) => {
       if (e.target === m || e.target.closest('[data-close]')) return closeModal();
       const o = e.target.closest('[data-open]'); if (o) return openWord(o.dataset.open);
+      if (e.target.closest('[data-learn]')) { SRS.prioritize(w.w); closeModal(); go('#/study'); return; }
       if (e.target.closest('[data-known]')) { SRS.markKnown(w.w, true); toast('이미 아는 단어로 표시했어요'); openWord(w.w); refreshIfWords(); }
       if (e.target.closest('[data-unknown]')) { SRS.markKnown(w.w, false); openWord(w.w); refreshIfWords(); }
       if (e.target.closest('[data-reset]')) { SRS.reset(w.w); openWord(w.w); refreshIfWords(); }
@@ -274,16 +276,18 @@
       shownAt = Date.now();
       draw();
       const w = DICT.get(cur.split('|')[0]);
-      if (SRS.settings.autoplay && !cur.endsWith('|r')) TTS.speak(w.w);
+      if (cur.endsWith('|l') || (SRS.settings.autoplay && !cur.endsWith('|r'))) TTS.speak(w.w);
     }
     function draw(anim) {
-      const isRev = cur.endsWith('|r'); const w = DICT.get(cur.split('|')[0]);
+      const isRev = cur.endsWith('|r'); const isListen = cur.endsWith('|l'); const w = DICT.get(cur.split('|')[0]);
       const left = q.nw.length + q.learn.length + q.rev.length;
       const pct = startTotal ? Math.min(100, (doneCount / (doneCount + left)) * 100) : 0;
       const sents = SRS.settings.showAllSentences ? w.ex : w.ex.slice(0, 1);
       let body;
       if (!flipped) {
-        body = isRev
+        body = isListen
+          ? `<div style="margin:auto 0 10px"><button class="btn pri big listen-btn" data-say="${esc(w.w)}">🔊</button></div><div class="hint">듣고 그림을 떠올려 보세요 🎧</div>`
+          : isRev
           ? `<div class="pic-wrap" style="margin:auto 0 0">${pic(w)}</div>${w.ex[0] ? `<div class="cloze">${clozeHTML(w.ex[0], w.w)}</div>` : ''}<div class="hint">무슨 단어일까요?</div>`
           : `<div class="front-word">${esc(w.w)}</div><div>${speakBtn(w.w)}</div><div class="hint">이 단어의 그림은? 생각해 보세요 🤔</div>`;
       } else {
@@ -312,6 +316,7 @@
       if (flipped) return; flipped = true; draw(SRS.settings.anim);
       const w = DICT.get(cur.split('|')[0]);
       if (cur.endsWith('|r') ? SRS.settings.autoplay : SRS.settings.autoplayBack) TTS.speak(cur.endsWith('|r') ? w.w : plain(w.ex[0] || w.w));
+      if (cur.endsWith('|l') && !SRS.settings.autoplayBack) TTS.speak(w.w);
     }
     function grade(g) {
       if (!flipped) return;
@@ -443,6 +448,10 @@
       <div class="set-row"><label>하루 최대 복습<span class="sub">Max reviews per day</span></label><input type="number" min="10" max="9999" id="s-rev" value="${s.maxRev}" style="width:90px"></div>
       ${sw('recog', '단어 → 그림 카드', 'Recognition: see word, recall picture')}
       ${sw('prod', '그림 → 단어 카드', 'Production: see picture, recall word (unlocks after the first card is learned)')}
+      ${sw('listen', '듣기 카드', 'Listening: hear the word, recall the picture (unlocks after the first card is learned)')}
+      <div class="set-row" style="display:block"><label>새 단어 주제<span class="sub">Only introduce new words from these topics / levels (none selected = all)</span></label>
+        <div class="chips" id="s-lv" style="margin-top:8px">${[...new Set(orderedWords().map((w) => w.l))].map((l) => `<span class="chip ${(s.newLv || []).includes(l) ? 'on' : ''}" data-lv="${l}">${l}단계</span>`).join('')}</div>
+        <div class="chips" id="s-cat" style="margin-top:8px">${Object.keys(CATS).filter((c) => WORDLIST.some((w) => w.c === c)).map((c) => `<span class="chip ${(s.newCats || []).includes(c) ? 'on' : ''}" data-cat="${c}">${CATS[c][1]} ${CATS[c][0]}</span>`).join('')}</div></div>
       ${sw('showAllSentences', '예문 모두 보기', 'Show all example sentences on the back')}
     </section>
     <section class="panel">
@@ -492,6 +501,13 @@
       }
       SRS.save(); applyPrefs(); toast('저장했어요 ✓', 1000);
     };
+    app.querySelectorAll('[data-lv],[data-cat]').forEach((el) => {
+      el.onclick = () => {
+        const key = el.dataset.lv ? 'newLv' : 'newCats'; const val = el.dataset.lv ? +el.dataset.lv : el.dataset.cat;
+        const arr = new Set(s[key] || []); if (arr.has(val)) arr.delete(val); else arr.add(val);
+        s[key] = [...arr]; el.classList.toggle('on', arr.has(val)); SRS.save(); toast('저장했어요 ✓', 1000);
+      };
+    });
     $('#s-rate').oninput = (e) => { s.rate = +e.target.value; e.target.previousElementSibling.querySelector('.sub').textContent = `Speech rate ${s.rate}`; SRS.save(); };
     $('#s-exp').onclick = () => {
       const blob = new Blob([SRS.exportJSON()], { type: 'application/json' });
