@@ -320,7 +320,7 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .story-card .st span { font-size: 13px; color: var(--ink3); }
 .story { max-width: 680px; margin: 0 auto; }
 .story h1 { font-family: var(--word-font); font-size: 34px; }
-.para { display: grid; grid-template-columns: 170px 1fr; gap: 18px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; margin: 12px 0; box-shadow: var(--shadow); }
+.para { display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; margin: 12px 0; box-shadow: var(--shadow); }
 .para .sent { font-size: 21px; }
 @media (max-width: 560px) { .para { grid-template-columns: 1fr; } .para .pic-wrap { width: 70%; margin: 0 auto; } }
 
