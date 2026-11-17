@@ -561,6 +561,7 @@
       <div class="set-row"><label>하루 최대 복습<span class="sub">Max reviews per day</span></label><input type="number" min="10" max="9999" id="s-rev" value="${s.maxRev}" style="width:90px"></div>
       ${sw('recog', '단어 → 그림 카드', 'Recognition: see word, recall picture')}
       ${sw('prod', '그림 → 단어 카드', 'Production: see picture, recall word (unlocks after the first card is learned)')}
+      <div class="set-row"><label>새 카드 순서<span class="sub">New card order</span></label><select id="s-order">${[['level', '단계순 (Level order)'], ['random', '섞기 (Shuffled)']].map(([v, l]) => `<option value="${v}" ${s.order === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       ${sw('typeRev', '그림 → 단어: 직접 쓰기', 'Type the answer on picture→word cards (built-in Hangul keyboard)')}
       ${sw('listen', '듣기 카드', 'Listening: hear the word, recall the picture (unlocks after the first card is learned)')}
       <div class="set-row" style="display:block"><label>새 단어 주제<span class="sub">Only introduce new words from these topics / levels (none selected = all)</span></label>
@@ -614,6 +615,7 @@
       if (t.id === 's-voice') s.voice = t.value;
       if (t.id === 's-theme') s.theme = t.value;
       if (t.id === 's-font') s.font = t.value;
+      if (t.id === 's-order') s.order = t.value;
       if (t.id === 's-imp' && t.files[0]) {
         const r = new FileReader();
         r.onload = () => { try { SRS.importJSON(r.result); toast('가져왔어요 ✓'); route(); } catch (err) { toast('파일을 읽을 수 없어요'); } };

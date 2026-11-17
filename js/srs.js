@@ -139,7 +139,15 @@
     const prio = (S.prio || []).filter((id) => nw.includes(id)); const pset = new Set(prio);
     const cats = st.newCats || []; const lvs = st.newLv || [];
     const allowed = (id) => { const w = byW.get(id); return w && (!cats.length || cats.includes(w.c)) && (!lvs.length || lvs.includes(w.l)); };
-    const newIds = prio.concat(nw.filter((id) => !id.includes('|') && !pset.has(id) && allowed(id)));
+    let fresh = nw.filter((id) => !id.includes('|') && !pset.has(id) && allowed(id));
+    if (st.order === 'random') {
+      const seed = dayKey(); const h = (x) => { let v = 0; for (const ch of x + seed) v = (v * 31 + ch.codePointAt(0)) >>> 0; return v; };
+      const lvOf = (id) => (byW.get(id) || {}).l || 1; const minLv = fresh.length ? Math.min(...fresh.map(lvOf)) : 1;
+      // shuffle inside the lowest unfinished level (+1) so easy words still come first
+      const near = fresh.filter((id) => lvOf(id) <= minLv + 1).sort((a, b) => h(a) - h(b));
+      fresh = near.concat(fresh.filter((id) => lvOf(id) > minLv + 1));
+    }
+    const newIds = prio.concat(fresh);
     const newRev = nw.filter((id) => id.includes('|'));
     const otherLeft = Math.max(0, st.newPerDay + (S.daily.extraNew || 0) - (S.daily.newOther || 0));
     const newPick = newIds.slice(0, newLeft).concat(newRev.slice(0, otherLeft));
