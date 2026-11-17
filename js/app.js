@@ -654,5 +654,5 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  root.App = { hardWords, achievements, start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
+  root.App = { OPP, hardWords, achievements, start, views, DICT, get words() { return orderedWords(); }, pic, sentHTML, clozeHTML, plain, speakBtn, esc, shuffle, sfx, confetti, toast, openWord, go, CATS, $, $$ };
 })(window);

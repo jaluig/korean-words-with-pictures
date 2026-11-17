@@ -11,7 +11,8 @@
     { id: 'memory', name: '짝 맞추기', sub: '단어와 그림 짝을 찾아요', icon: '🃏 50 50 80' },
     { id: 'type', name: '단어 쓰기', sub: '그림을 보고 한글로 써요', icon: '⌨️ 50 50 80' },
     { id: 'speed', name: '스피드 O/X', sub: '60초! 맞아요? 틀려요?', icon: '⚡ 50 50 80' },
-    { id: 'order', name: '문장 만들기', sub: '단어를 순서대로 놓아요', icon: '🧱 50 50 80' }
+    { id: 'order', name: '문장 만들기', sub: '단어를 순서대로 놓아요', icon: '🧱 50 50 80' },
+    { id: 'opp', name: '반대말 찾기', sub: '반대 그림을 골라요', icon: '☯️ 50 50 80' }
   ];
 
   function poolFor(mode) {
@@ -70,6 +71,7 @@
     if (id === 'memory') return memory(app, pool, g);
     if (id === 'speed') return speed(app, pool, g);
     if (id === 'order') return order(app, pool, g);
+    if (id === 'opp') return opposite(app, pool, g);
     return quiz(app, pool, g);
   };
 
@@ -209,6 +211,36 @@
         }
       }
     };
+    return () => { alive = false; };
+  }
+
+  /* ---- opposites ---- */
+  function opposite(app, pool, g) {
+    const has = (w) => (A.OPP[w.w] || []).some((o) => A.DICT.has(o));
+    let items = shuffle(pool.filter(has));
+    if (items.length < 6) items = shuffle(A.words.filter(has));
+    items = items.slice(0, 10);
+    let i = 0; let score = 0; const wrong = []; let locked = false; let alive = true;
+    function draw() {
+      locked = false;
+      const w = items[i]; const opps = A.OPP[w.w].filter((o) => A.DICT.has(o)); const right = A.DICT.get(opps[0]);
+      const opts = shuffle([right, ...distract(right, pool, 3).filter((x) => x.w !== w.w && !opps.includes(x.w)).slice(0, 3)]);
+      app.innerHTML = `<div class="gamebox">${header(g, score, i + 1, items.length)}
+        <div class="row" style="justify-content:center;flex-wrap:nowrap;gap:14px"><div style="width:min(38%,170px)">${pic(w)}</div><div class="q-word" style="font-size:38px">${esc(w.w)} ↔ ?</div></div>
+        <div class="opts" style="margin-top:12px">${opts.map((x) => `<button class="opt" data-a="${esc(x.w)}">${pic(x)}</button>`).join('')}</div>
+        <div class="feedback" id="fb"></div></div>`;
+      app.dataset.right = right.w;
+    }
+    app.onclick = (e) => {
+      const b = e.target.closest('[data-a]'); if (!b || locked) return;
+      locked = true; const rw = app.dataset.right; const ok = b.dataset.a === rw;
+      if (ok) { score++; sfx(true); } else { sfx(false); wrong.push(items[i]); const r = app.querySelector(`[data-a="${CSS.escape(rw)}"]`); if (r) r.classList.add('right'); }
+      b.classList.add(ok ? 'right' : 'wrong');
+      $('#fb').className = `feedback ${ok ? 'ok' : 'no'}`; $('#fb').innerHTML = `${ok ? '⭕' : '❌'} ${esc(items[i].w)} ↔ <b>${esc(rw)}</b>`;
+      TTS.speak(rw);
+      setTimeout(() => { if (!alive) return; i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 1100 : 2000);
+    };
+    draw();
     return () => { alive = false; };
   }
 
