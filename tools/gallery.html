@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../css/style.css">
+<style>body{background:#fff}.g{display:grid;grid-template-columns:repeat(6,170px);gap:8px;padding:8px}.g div{font:700 14px sans-serif;text-align:center}.g .pic{border-radius:10px}</style></head>
+<body><div class="g" id="g"></div>
+<script src="../js/emoji-ok.js"></script><script src="../js/scene.js"></script><script>var WORDS=[];var STORIES=[];Scene.setBase('../');</script>
+<script>
+const files=(new URLSearchParams(location.search).get('f')||'').split(',');
+let n=0;files.forEach(f=>{const s=document.createElement('script');s.src='../data/'+f;s.async=false;s.onload=()=>{if(++n===files.length)draw()};document.head.appendChild(s)});
+function draw(){const q=new URLSearchParams(location.search);const a=+q.get('a')||0,b=+q.get('b')||9999;const src=q.get('stories')?STORIES.flatMap(s=>s.p.map((p,i)=>({w:s.id+i,pic:p.pic}))):WORDS;
+document.getElementById('g').innerHTML=src.slice(a,b).map((w,i)=>`<div>${Scene.render(w.pic,{seed:w.w,cls:'still'})}${a+i} ${w.w}</div>`).join('');document.body.dataset.ready=1}
+</script></body></html>

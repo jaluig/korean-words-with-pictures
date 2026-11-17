@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>그림 단어</title>
+<meta name="description" content="Korean words with pictures — spaced-repetition flashcards without translations.">
+<meta name="theme-color" content="#6d5dfc">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/"><span class="logo">그</span><span class="brand-t">그림 단어</span></a>
+  <nav class="nav" id="nav">
+    <a href="#/" data-v="home"><span class="ni">🏠</span><span class="nk">홈</span></a>
+    <a href="#/study" data-v="study"><span class="ni">🃏</span><span class="nk">공부</span></a>
+    <a href="#/words" data-v="words"><span class="ni">📚</span><span class="nk">단어</span></a>
+    <a href="#/read" data-v="read"><span class="ni">📖</span><span class="nk">읽기</span></a>
+    <a href="#/games" data-v="games"><span class="ni">🎮</span><span class="nk">게임</span></a>
+    <a href="#/stats" data-v="stats"><span class="ni">📈</span><span class="nk">통계</span></a>
+    <a href="#/settings" data-v="settings"><span class="ni">⚙️</span><span class="nk">설정</span></a>
+  </nav>
+</header>
+<main id="app" class="app"></main>
+<div id="pop" class="pop" hidden></div>
+<div id="modal" class="modal" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="js/emoji-ok.js"></script>
+<script src="js/scene.js"></script>
+<script>var WORDS = []; var STORIES = [];</script>
+<!-- DATA -->
+<script src="data/01-people-body-food.js"></script>
+<script src="data/02-nature-places-things.js"></script>
+<script src="data/03-verbs-adjectives.js"></script>
+<!-- /DATA -->
+<script src="js/srs.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/app.js"></script>
+<script src="js/games.js"></script>
+<script src="js/read.js"></script>
+<script>App.start();</script>
+</body>
+</html>
