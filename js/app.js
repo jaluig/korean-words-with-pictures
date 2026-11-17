@@ -42,6 +42,7 @@
     return esc(s).replace(TOK, (m, form, lem) => ((lem || form) === focus ? '<span class="blank">&nbsp;</span>' : `<span class="tok${DICT.has(lem || form) ? ' has' : ''}" data-l="${esc(lem || form)}">${form}</span>`));
   }
 
+  const clozeOf = (w) => w.ex.find((x) => x.includes(`|${w.w}}`) || x.includes(`{${w.w}}`)) || '';
   const pic = (w, opts = {}) => Scene.render(w.pic, { seed: w.w, ...opts });
 
   /* ---------- hover / tap popup for words inside sentences ---------- */
@@ -157,17 +158,21 @@
       <div class="detail-pic">${pic(w)}</div>
       <div class="stack">${w.ex.map((s) => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div class="sent grow">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
       <div class="sub" style="margin-top:12px">${due}</div>
+      <textarea class="note" id="wnote" rows="2" placeholder="📝 메모 (my note)…">${esc((SRS.state.notes || {})[w.w] || '')}</textarea>
       <div class="row" style="margin-top:12px">
         ${st === 'new' ? '<button class="btn sm pri" data-learn>지금 배우기 ▶</button>' : ''}
         ${st === 'known' ? '<button class="btn sm" data-unknown>다시 공부하기</button>' : '<button class="btn sm" data-known>이미 알아요 ✓</button>'}
         ${c ? '<button class="btn sm ghost" data-reset>초기화</button>' : ''}
+        <button class="btn sm ghost" data-flag title="Picture is confusing">${(SRS.state.flags || {})[w.w] ? '🚩 표시됨' : '🏳️ 그림이 이상해요'}</button>
       </div>
       ${rel.length ? `<h3 style="margin-top:18px;font-size:15px">${CATS[w.c] ? CATS[w.c][0] : ''}</h3><div class="related">${rel.map((r) => `<div class="wcard" data-open="${esc(r.w)}">${pic(r, { lazy: true })}<div class="ww">${esc(r.w)}</div></div>`).join('')}</div>` : ''}
     </div>`;
     m.hidden = false;
+    const nt = $('#wnote'); if (nt) nt.oninput = () => { const n = SRS.state.notes = SRS.state.notes || {}; if (nt.value.trim()) n[w.w] = nt.value; else delete n[w.w]; SRS.save(); };
     m.onclick = (e) => {
       if (e.target === m || e.target.closest('[data-close]')) return closeModal();
       const o = e.target.closest('[data-open]'); if (o) return openWord(o.dataset.open);
+      if (e.target.closest('[data-flag]')) { const f = SRS.state.flags = SRS.state.flags || {}; if (f[w.w]) delete f[w.w]; else f[w.w] = Date.now(); SRS.save(); openWord(w.w); return; }
       if (e.target.closest('[data-learn]')) { SRS.prioritize(w.w); closeModal(); go('#/study'); return; }
       if (e.target.closest('[data-known]')) { SRS.markKnown(w.w, true); toast('이미 아는 단어로 표시했어요'); openWord(w.w); refreshIfWords(); }
       if (e.target.closest('[data-unknown]')) { SRS.markKnown(w.w, false); openWord(w.w); refreshIfWords(); }
@@ -289,12 +294,13 @@
         body = isListen
           ? `<div style="margin:auto 0 10px"><button class="btn pri big listen-btn" data-say="${esc(w.w)}">🔊</button></div><div class="hint">듣고 그림을 떠올려 보세요 🎧</div>`
           : isRev
-          ? `<div class="pic-wrap" style="margin:auto 0 0">${pic(w)}</div>${w.ex[0] ? `<div class="cloze">${clozeHTML(w.ex[0], w.w)}</div>` : ''}<div class="hint">무슨 단어일까요?</div>`
+          ? `<div class="pic-wrap" style="margin:auto 0 0">${pic(w)}</div>${clozeOf(w) ? `<div class="cloze">${clozeHTML(clozeOf(w), w.w)}</div>` : ''}<div class="hint">무슨 단어일까요?</div>`
           : `<div class="front-word">${esc(w.w)}</div><div>${speakBtn(w.w)}</div><div class="hint">이 단어의 그림은? 생각해 보세요 🤔</div>`;
       } else {
         body = `<div class="back-word">${esc(w.w)} ${speakBtn(w.w, 'sm')}</div>
           <div class="pic-wrap">${pic(w)}</div>
-          <div class="sents">${sents.map((s) => `<div class="sline"><div class="sent">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>`;
+          <div class="sents">${sents.map((s) => `<div class="sline"><div class="sent">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
+          ${(SRS.state.notes || {})[w.w] ? `<div class="card-note">📝 ${esc(SRS.state.notes[w.w])}</div>` : ''}`;
       }
       const pv = flipped ? SRS.preview(cur) : null;
       app.innerHTML = `<div class="study">
@@ -512,6 +518,12 @@
       <div class="set-row"><label>테마<span class="sub">Theme</span></label><select id="s-theme">${[['auto', '자동'], ['light', '밝게'], ['dark', '어둡게']].map(([v, l]) => `<option value="${v}" ${s.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="set-row"><label>글꼴<span class="sub">Word font — try handwriting to practise reading!</span></label><select id="s-font">${[['sans', '고딕'], ['round', '동글'], ['hand', '손글씨']].map(([v, l]) => `<option value="${v}" ${s.font === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     </section>
+    ${Object.keys(SRS.state.flags || {}).length ? `<section class="panel">
+      <h2>🚩 이상한 그림 <span class="en">Flagged pictures</span></h2>
+      <p class="sub">Copy this list and send it to whoever maintains the site so the pictures can be fixed.</p>
+      <textarea class="note" id="s-flags" rows="3" readonly>${Object.keys(SRS.state.flags).join(', ')}</textarea>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="s-flagcopy">📋 복사</button><button class="btn sm ghost" id="s-flagclear">지우기</button></div>
+    </section>` : ''}
     <section class="panel">
       <h2>데이터 <span class="en">Data</span></h2>
       <p class="sub">진도는 이 브라우저에 저장돼요. Progress is stored in this browser — export it to move it to another device.</p>
@@ -555,6 +567,10 @@
       const blob = new Blob([SRS.exportJSON()], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `geurim-danear-${SRS.dayKey()}.json`; a.click();
     };
+    if ($('#s-flagcopy')) {
+      $('#s-flagcopy').onclick = () => { const t = $('#s-flags'); t.select(); try { navigator.clipboard.writeText(t.value); } catch (e) { document.execCommand('copy'); } toast('복사했어요 ✓'); };
+      $('#s-flagclear').onclick = () => { SRS.state.flags = {}; SRS.save(); route(); };
+    }
     $('#s-wipe').onclick = () => { if (confirm('정말 모든 진도를 지울까요? (Delete all progress?)')) { SRS.wipe(); applyPrefs(); toast('초기화했어요'); route(); } };
   };
 

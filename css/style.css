@@ -370,3 +370,8 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
   .card .back-word { font-size: 34px; margin-bottom: 10px; }
   .sent { font-size: 18px; }
 }
+.note { width: 100%; margin-top: 10px; font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.note:focus { outline: none; border-color: var(--pri); box-shadow: 0 0 0 3px var(--pri-soft); }
+.card-note { margin-top: 10px; width: 100%; text-align: left; background: #fff7d6; color: #6b5300; border-radius: 12px; padding: 8px 12px; font-size: 15px; }
+:root[data-theme="dark"] .card-note { background: #3a3220; color: #fde68a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card-note { background: #3a3220; color: #fde68a; } }
