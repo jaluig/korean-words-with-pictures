@@ -329,6 +329,8 @@
       const S = SRS.state; const today = S.log[SRS.dayKey()] || { n: 0, ok: 0, nw: 0 };
       const soon = q.learn.length ? Math.min(...q.learn.map((id) => SRS.get(id).due)) : 0;
       const remainingNew = q.totalNew;
+      const t0 = new Date(); t0.setHours(t0.getHours() < 4 ? -20 : 4, 0, 0, 0);
+      const todays = WORDLIST.filter((w) => { const c = SRS.get(w.w); return c && c.first && c.first >= t0.getTime(); });
       app.innerHTML = `<div class="study"><div class="panel done">
         <div class="big-emo">${Scene.render('🎉 50 50 80 b', { cls: 'still-bg' })}</div>
         <h1>오늘 공부 끝!</h1>
@@ -339,6 +341,8 @@
           <a class="btn" href="#/games">게임 하기 🎮</a>
           <a class="btn" href="#/read">읽기 📖</a>
         </div>
+        ${todays.length ? `<h3 style="margin-top:22px">오늘 배운 단어 <span class="muted" style="font-size:14px">${todays.length}</span></h3>
+        <div class="wgrid" style="grid-template-columns:repeat(auto-fill,minmax(90px,1fr));text-align:center">${todays.map((w) => `<div class="wcard" data-open="${esc(w.w)}">${pic(w, { lazy: true })}<div class="ww" style="font-size:15px">${esc(w.w)}</div></div>`).join('')}</div>` : ''}
       </div></div>`;
       if (doneCount > 0) confetti();
     }
@@ -349,6 +353,7 @@
       if (e.target.closest('[data-undo]')) { const id = SRS.undo(); if (id) { doneCount = Math.max(0, doneCount - 1); build(); cur = id; flipped = false; shownAt = Date.now(); draw(); toast('되돌렸어요'); } return; }
       if (e.target.closest('[data-info]')) { if (cur) openWord(cur.split('|')[0]); return; }
       if (e.target.closest('[data-more]')) { SRS.addExtraNew(10); next(); return; }
+      const op = e.target.closest('[data-open]'); if (op) { openWord(op.dataset.open); return; }
       if (!flipped && cur && e.target.closest('.card')) flip();
     };
     const key = (e) => {
