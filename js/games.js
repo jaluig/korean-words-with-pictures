@@ -87,7 +87,7 @@
     if (g.id === 'cloze') items = items.filter((w) => w.ex.length && /\{/.test(w.ex[0]) && w.ex.some((s) => s.includes(`|${w.w}}`) || s.includes(`{${w.w}}`)));
     items = items.slice(0, N);
     if (!items.length) { app.innerHTML = '<div class="empty">문제가 없어요</div>'; return; }
-    let locked = false; let typedHint = 0;
+    let locked = false; let typedHint = 0; let alive = true;
     function draw() {
       locked = false; typedHint = 0;
       const w = items[i]; const opts = shuffle([w, ...distract(w, pool, 3)]);
@@ -122,7 +122,7 @@
       fb.innerHTML = ok ? '맞아요! ⭕' : `틀렸어요 ❌ — <b>${esc(w.w)}</b>`;
       if (g.id !== 'listen' || !ok) TTS.speak(w.w);
       if (el) el.classList.add(ok ? 'right' : 'wrong');
-      setTimeout(() => { i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 900 : 1900);
+      setTimeout(() => { if (!alive) return; i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 900 : 1900);
     }
     function check(val) {
       if (locked) return; const w = items[i];
@@ -152,14 +152,14 @@
     };
     document.addEventListener('keydown', key);
     draw();
-    return () => document.removeEventListener('keydown', key);
+    return () => { alive = false; document.removeEventListener('keydown', key); };
   }
 
   /* ---- memory ---- */
   function memory(app, pool, g) {
     const words = shuffle(pool).slice(0, 6);
     const cards = shuffle([...words.map((w) => ({ w, t: 'w' })), ...words.map((w) => ({ w, t: 'p' }))]);
-    let open = []; let done = 0; let moves = 0; const t0 = Date.now(); let lock = false;
+    let open = []; let done = 0; let moves = 0; const t0 = Date.now(); let lock = false; let alive = true;
     app.innerHTML = `<div class="gamebox">${header(g, 0)}<div class="mem">${cards.map((c, i) => `<button class="mcard" data-i="${i}">?</button>`).join('')}</div><p class="sub" style="text-align:center;margin-top:12px">단어와 그림 짝을 찾으세요</p></div>`;
     const els = Array.from(app.querySelectorAll('.mcard'));
     function face(i) { const c = cards[i]; return c.t === 'w' ? `<span class="mw">${esc(c.w.w)}</span>` : pic(c.w); }
@@ -176,6 +176,7 @@
           if (done === words.length) {
             const sec = Math.round((Date.now() - t0) / 1000);
             setTimeout(() => {
+              if (!alive) return;
               confetti();
               app.querySelector('.gamebox').insertAdjacentHTML('beforeend', `<div class="panel result" style="margin-top:14px"><div class="big">🎉 ${sec}초</div><p class="sub">${moves}번 만에 성공!</p><button class="btn pri" data-again>다시 하기 🔁</button></div>`);
               app.querySelector('[data-again]').onclick = () => A.go(location.hash);
@@ -188,6 +189,7 @@
         }
       }
     };
+    return () => { alive = false; };
   }
 
   /* ---- sentence building ---- */
@@ -196,7 +198,7 @@
     const pickS = (w) => w.ex.find((x) => A.plain(x).split(' ').length >= 3 && A.plain(x).split(' ').length <= 7);
     const items = shuffle(pool.filter(pickS)).slice(0, N);
     if (!items.length) { app.innerHTML = '<div class="empty">문제가 없어요</div>'; return; }
-    let parts = []; let bank = []; let picked = []; let done = false; let sent = '';
+    let parts = []; let bank = []; let picked = []; let done = false; let sent = ''; let alive = true;
     function draw() {
       const w = items[i]; sent = pickS(w); parts = A.plain(sent).split(' ');
       do { bank = shuffle(parts.map((t, k) => ({ t, k }))); } while (bank.length > 1 && bank.map((b) => b.t).join(' ') === parts.join(' '));
@@ -218,7 +220,7 @@
       paint();
       const fb = $('#fb'); fb.className = `feedback ${ok ? 'ok' : 'no'}`; fb.textContent = ok ? '맞아요! ⭕' : '틀렸어요 ❌';
       TTS.speak(A.plain(sent));
-      setTimeout(() => { i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 1800 : 3200);
+      setTimeout(() => { if (!alive) return; i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 1800 : 3200);
     }
     app.onclick = (e) => {
       if (done) return;
@@ -227,6 +229,7 @@
       if (b) { picked.splice(+b.dataset.back, 1); paint(); }
     };
     draw();
+    return () => { alive = false; };
   }
 
   /* ---- speed true/false ---- */

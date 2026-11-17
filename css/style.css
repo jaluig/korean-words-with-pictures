@@ -375,3 +375,6 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .card-note { margin-top: 10px; width: 100%; text-align: left; background: #fff7d6; color: #6b5300; border-radius: 12px; padding: 8px 12px; font-size: 15px; }
 :root[data-theme="dark"] .card-note { background: #3a3220; color: #fde68a; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card-note { background: #3a3220; color: #fde68a; } }
+.sline-para { grid-template-columns: 110px 1fr; padding: 10px; }
+.sline-para .sent { font-size: 19px; }
+@media (max-width: 560px) { .sline-para { grid-template-columns: 84px 1fr; } .sline-para .pic-wrap { width: 100%; } }

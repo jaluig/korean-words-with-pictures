@@ -133,7 +133,7 @@
     const v = name || 'home';
     if (cleanup) { cleanup(); cleanup = null; }
     hidePop(); closeModal();
-    $$('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.v === v || (v === 'game' && a.dataset.v === 'games') || (v === 'story' && a.dataset.v === 'read')));
+    $$('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.v === v || (v === 'game' && a.dataset.v === 'games') || ((v === 'story' || v === 'storyquiz' || v === 'sentences') && a.dataset.v === 'read')));
     const fn = views[v] || views.home; current = v;
     const app = $('#app');
     app.innerHTML = '';
