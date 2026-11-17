@@ -6,5 +6,5 @@
 const files=(new URLSearchParams(location.search).get('f')||'').split(',');
 let n=0;files.forEach(f=>{const s=document.createElement('script');s.src='../data/'+f;s.async=false;s.onload=()=>{if(++n===files.length)draw()};document.head.appendChild(s)});
 function draw(){const q=new URLSearchParams(location.search);const a=+q.get('a')||0,b=+q.get('b')||9999;const src=q.get('stories')?STORIES.flatMap(s=>s.p.map((p,i)=>({w:s.id+i,pic:p.pic}))):WORDS;
-document.getElementById('g').innerHTML=src.slice(a,b).map((w,i)=>`<div>${Scene.render(w.pic,{seed:w.w,cls:'still'})}${a+i} ${w.w}</div>`).join('');document.body.dataset.ready=1}
+const ids=q.get('ids');const list=ids?ids.split(',').map(Number).map(i=>[i,src[i]]):src.slice(a,b).map((w,i)=>[a+i,w]);document.getElementById('g').innerHTML=list.map(([i,w])=>`<div>${Scene.render(w.pic,{seed:w.w,cls:'still'})}${i} ${w.w}</div>`).join('');document.body.dataset.ready=1}
 </script></body></html>
