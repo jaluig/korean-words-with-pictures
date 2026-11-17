@@ -197,7 +197,18 @@
     const wotd = wotdPool.length ? wotdPool[(day * 7919) % wotdPool.length] : null;
     const hr = new Date().getHours();
     const greet = hr < 5 ? '늦은 밤이에요 🌙' : hr < 11 ? '좋은 아침이에요! ☀️' : hr < 18 ? '안녕하세요! 👋' : '좋은 저녁이에요 🌆';
+    const welcome = !SRS.state.welcomed && !Object.keys(SRS.state.cards).length;
     app.innerHTML = `
+    ${welcome ? `<section class="panel welcome" style="margin-bottom:18px">
+      <h2>환영해요! 👋 <span class="en">Welcome</span></h2>
+      <div class="wl-grid">
+        <div>${Scene.render('🃏 50 50 70', { cls: 'still-bg' })}<b>공부</b><span>See a word, imagine its picture, flip the card and rate yourself. Cards come back right before you'd forget them.</span></div>
+        <div>${Scene.render('👆 50 50 70 b', { cls: 'still-bg' })}<b>밑줄 단어</b><span>Hover (or tap) any dotted word in a sentence to see its picture. Tap again to open it.</span></div>
+        <div>${Scene.render('🔊 50 50 70', { cls: 'still-bg' })}<b>듣기</b><span>Press 🔊 to hear Korean. No sound? Install a Korean voice in your phone/computer settings.</span></div>
+        <div>${Scene.render('📖 50 50 70', { cls: 'still-bg' })}<b>읽기 · 게임</b><span>Read picture stories and play games with the words you've learned.</span></div>
+      </div>
+      <div class="row" style="margin-top:12px"><a class="btn pri" href="#/study" data-welcome>시작하기 ▶</a><button class="btn ghost" data-welcome>닫기</button></div>
+    </section>` : ''}
     <div class="home-grid">
       <section class="hero">
         <h1>${greet}</h1>
@@ -240,7 +251,10 @@
       ${heatmap(18)}
     </section>
     <div class="foot">그림: Microsoft Fluent Emoji (MIT) · 음성: 브라우저 TTS</div>`;
-    app.onclick = (e) => { const o = e.target.closest('[data-open]'); if (o) openWord(o.dataset.open); };
+    app.onclick = (e) => {
+      const o = e.target.closest('[data-open]'); if (o) openWord(o.dataset.open);
+      const wl = e.target.closest('[data-welcome]'); if (wl) { SRS.state.welcomed = true; SRS.save(true); const p = $('.welcome'); if (p) p.remove(); }
+    };
   };
 
   function heatmap(weeks) {

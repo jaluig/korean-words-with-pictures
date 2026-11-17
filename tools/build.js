@@ -12,7 +12,7 @@ const Scene = require(path.join(ROOT, 'js/scene.js'));
 const CHECK = process.argv.includes('--check');
 
 // UI emoji used directly by the app code
-const UI = ['📚', '🏆', '🎉', '🖼️', '💬', '🎧', '🧩', '🃏', '⌨️', '⚡', '👍', '💪', '❌', '🧱', '👣', '🌱', '🌿', '🌳', '🏅', '👑', '🔥', '⭐', '🌟', '💎', '🎓', '🧠', '🥇', '🗂️', '📖', '💯'];
+const UI = ['📚', '🏆', '🎉', '🖼️', '💬', '🎧', '🧩', '🃏', '⌨️', '⚡', '👍', '💪', '❌', '🧱', '👣', '🌱', '🌿', '🌳', '🏅', '👑', '🔥', '⭐', '🌟', '💎', '🎓', '🧠', '🥇', '🗂️', '📖', '💯', '👆', '🔊'];
 
 const dataFiles = fs.readdirSync(path.join(ROOT, 'data')).filter((f) => f.endsWith('.js')).sort();
 const ctx = { WORDS: [], STORIES: [] }; vm.createContext(ctx);
