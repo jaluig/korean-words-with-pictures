@@ -187,7 +187,7 @@
     const lv = {};
     words.forEach((w) => { const L = lv[w.l] || (lv[w.l] = { t: 0, m: 0, y: 0, l: 0 }); L.t++; const s = SRS.wordState(w.w); if (s === 'mature' || s === 'known') L.m++; else if (s === 'young') L.y++; else if (s === 'learn') L.l++; });
     const pool = words.filter((w) => SRS.wordState(w.w) !== 'new');
-    const wotdPool = pool.length > 4 ? pool : words;
+    const wotdPool = pool.length > 4 ? pool : words.filter((w) => w.l === 1);
     const day = Math.floor(Date.now() / SRS.DAY);
     const wotd = wotdPool.length ? wotdPool[(day * 7919) % wotdPool.length] : null;
     const hr = new Date().getHours();

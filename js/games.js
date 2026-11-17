@@ -10,7 +10,8 @@
     { id: 'cloze', name: '빈칸 채우기', sub: '예문의 빈칸에 맞는 그림', icon: '🧩 50 50 80' },
     { id: 'memory', name: '짝 맞추기', sub: '단어와 그림 짝을 찾아요', icon: '🃏 50 50 80' },
     { id: 'type', name: '단어 쓰기', sub: '그림을 보고 한글로 써요', icon: '⌨️ 50 50 80' },
-    { id: 'speed', name: '스피드 O/X', sub: '60초! 맞아요? 틀려요?', icon: '⚡ 50 50 80' }
+    { id: 'speed', name: '스피드 O/X', sub: '60초! 맞아요? 틀려요?', icon: '⚡ 50 50 80' },
+    { id: 'order', name: '문장 만들기', sub: '단어를 순서대로 놓아요', icon: '🧱 50 50 80' }
   ];
 
   function poolFor(mode) {
@@ -55,6 +56,7 @@
     const g = GAMES.find((x) => x.id === id) || GAMES[0];
     if (id === 'memory') return memory(app, pool, g);
     if (id === 'speed') return speed(app, pool, g);
+    if (id === 'order') return order(app, pool, g);
     return quiz(app, pool, g);
   };
 
@@ -185,6 +187,45 @@
         }
       }
     };
+  }
+
+  /* ---- sentence building ---- */
+  function order(app, pool, g) {
+    const N = 8; let i = 0; let score = 0; const wrong = [];
+    const pickS = (w) => w.ex.find((x) => A.plain(x).split(' ').length >= 3 && A.plain(x).split(' ').length <= 7);
+    const items = shuffle(pool.filter(pickS)).slice(0, N);
+    if (!items.length) { app.innerHTML = '<div class="empty">문제가 없어요</div>'; return; }
+    let parts = []; let bank = []; let picked = []; let done = false; let sent = '';
+    function draw() {
+      const w = items[i]; sent = pickS(w); parts = A.plain(sent).split(' ');
+      do { bank = shuffle(parts.map((t, k) => ({ t, k }))); } while (bank.length > 1 && bank.map((b) => b.t).join(' ') === parts.join(' '));
+      picked = []; done = false; paint();
+    }
+    function paint() {
+      const w = items[i];
+      app.innerHTML = `<div class="gamebox">${header(g, score, i + 1, items.length)}
+        <div class="q-pic" style="width:min(48%,200px)">${pic(w)}</div>
+        <div class="order-line">${picked.map((p, k) => `<button class="chunk on" data-back="${k}">${esc(p.t)}</button>`).join('') || '<span class="muted">단어를 눌러서 문장을 만드세요</span>'}</div>
+        <div class="order-bank">${bank.map((b, k) => `<button class="chunk" data-pick="${k}" ${picked.includes(b) ? 'disabled' : ''}>${esc(b.t)}</button>`).join('')}</div>
+        <div class="feedback" id="fb"></div>
+        ${done ? `<div class="panel" style="margin-top:10px;text-align:center"><div class="sent">${A.sentHTML(sent, w.w)}</div></div>` : ''}
+      </div>`;
+    }
+    function check() {
+      const ok = picked.map((p) => p.t).join(' ') === parts.join(' ');
+      done = true; if (ok) { score++; sfx(true); } else { sfx(false); wrong.push(items[i]); }
+      paint();
+      const fb = $('#fb'); fb.className = `feedback ${ok ? 'ok' : 'no'}`; fb.textContent = ok ? '맞아요! ⭕' : '틀렸어요 ❌';
+      TTS.speak(A.plain(sent));
+      setTimeout(() => { i++; if (i >= items.length) results(app, g, score, items.length, wrong); else draw(); }, ok ? 1800 : 3200);
+    }
+    app.onclick = (e) => {
+      if (done) return;
+      const p = e.target.closest('[data-pick]'); const b = e.target.closest('[data-back]');
+      if (p) { picked.push(bank[+p.dataset.pick]); paint(); if (picked.length === parts.length) check(); }
+      if (b) { picked.splice(+b.dataset.back, 1); paint(); }
+    };
+    draw();
   }
 
   /* ---- speed true/false ---- */

@@ -348,3 +348,8 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .empty { text-align: center; color: var(--ink2); padding: 40px 10px; }
 .foot { text-align: center; color: var(--ink3); font-size: 12px; margin-top: 40px; }
 .listen-btn { width: 120px; height: 120px; border-radius: 50%; font-size: 44px; }
+.order-line { min-height: 64px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 12px; border: 2px dashed var(--line); border-radius: 18px; margin: 10px 0; }
+.order-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chunk { border: 0; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 10px 14px; font: inherit; font-size: 20px; font-weight: 500; cursor: pointer; color: var(--ink); border: 1px solid var(--line); }
+.chunk.on { background: var(--pri-soft); color: var(--pri); }
+.chunk[disabled] { opacity: .25; cursor: default; }
