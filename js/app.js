@@ -16,6 +16,10 @@
   const POS = { n: '명사', v: '동사', a: '형용사', ad: '부사', pr: '대명사', nu: '수사', d: '관형사', x: '감탄사', p: '표현' };
 
   const DICT = new Map();
+  const OPP_PAIRS = '크다 작다,많다 적다,길다 짧다,높다 낮다,멀다 가깝다,무겁다 가볍다,빠르다 느리다,뜨겁다 차갑다,덥다 춥다,좋다 나쁘다,쉽다 어렵다,비싸다 싸다,밝다 어둡다,깨끗하다 더럽다,넓다 좁다,두껍다 얇다,젊다 늙다,기쁘다 슬프다,맛있다 맛없다,같다 다르다,조용하다 시끄럽다,부지런하다 게으르다,있다 없다,오다 가다,사다 팔다,주다 받다,열다 닫다,켜다 끄다,입다 벗다,앉다 서다,웃다 울다,이기다 지다,시작하다 끝나다,들어가다 나가다,올라가다 내려가다,넣다 꺼내다,밀다 당기다,알다 모르다,좋아하다 싫어하다,위 아래,안 밖,앞 뒤,오른쪽 왼쪽,어제 내일,아침 저녁,낮 밤,여름 겨울,봄 가을,남자 여자,할머니 할아버지,아들 딸,남편 아내,입구 출구,맑다 흐리다,배고프다 배부르다,잘하다 못하다,출근하다 퇴근하다,성공하다 실패하다,작년 내년,더하다 빼다,태어나다 죽다,싱겁다 짜다,부드럽다 딱딱하다,새 낡다,오전 오후,부자 가난하다,쌓다 무너지다,들어오다 나가다,올라가다 내려오다,해 달,하늘 땅,편하다 불편하다,안전하다 위험하다,천천히 빨리,조금 많이,기억하다 잊다,묻다 대답하다,가르치다 배우다,가져오다 가져가다,신다 벗다,가득 비다';
+  const OPP = {};
+  OPP_PAIRS.split(',').forEach((p) => { const [a, b] = p.split(' '); (OPP[a] = OPP[a] || []).push(b); (OPP[b] = OPP[b] || []).push(a); });
+  const oppHTML = (w) => { const o = (OPP[w] || []).filter((x) => DICT.has(x)); return o.length ? `<div class="opp"><span class="muted">반대말</span> ↔ ${o.map((x) => `<span class="tok has" data-l="${esc(x)}">${esc(x)}</span>`).join(', ')}</div>` : ''; };
   let WORDLIST = [];
 
   function prepare() {
@@ -162,6 +166,7 @@
       <div class="row" style="gap:6px"><span class="chip">${POS[w.p] || ''}</span><span class="chip">${CATS[w.c] ? CATS[w.c][0] : ''}</span><span class="chip">${w.l}단계</span><span class="chip"><i class="dot ${st}" style="width:9px;height:9px;border-radius:50%;display:inline-block"></i> ${stateLabel(st)}</span></div>
       <div class="detail-pic">${pic(w)}</div>
       <div class="stack">${w.ex.map((s) => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div class="sent grow">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
+      ${oppHTML(w.w)}
       <div class="sub" style="margin-top:12px">${due}</div>
       <textarea class="note" id="wnote" rows="2" placeholder="📝 메모 (my note)…">${esc((SRS.state.notes || {})[w.w] || '')}</textarea>
       <div class="row" style="margin-top:12px">
@@ -324,6 +329,7 @@
         body = `${tr}<div class="back-word">${esc(w.w)} ${speakBtn(w.w, 'sm')}</div>
           <div class="pic-wrap">${pic(w)}</div>
           <div class="sents">${sents.map((s) => `<div class="sline"><div class="sent">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
+          ${oppHTML(w.w)}
           ${(SRS.state.notes || {})[w.w] ? `<div class="card-note">📝 ${esc(SRS.state.notes[w.w])}</div>` : ''}`;
       }
       const pv = flipped ? SRS.preview(cur) : null;

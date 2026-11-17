@@ -397,3 +397,5 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .wl-grid > div .pic { grid-row: span 2; width: 56px; }
 .wl-grid b { font-size: 15px; }
 .wl-grid span { font-size: 13px; color: var(--ink2); line-height: 1.4; }
+.opp { margin-top: 10px; font-size: 18px; width: 100%; text-align: left; }
+.opp .muted { font-size: 13px; margin-right: 4px; }
