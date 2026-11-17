@@ -23,13 +23,25 @@
     if (mode && mode.startsWith('l:')) return all.filter((w) => String(w.l) === mode.slice(2));
     return learned.length >= 8 ? learned : all.filter((w) => w.l === 1);
   }
+  const mainCache = new Map();
+  function mainEmoji(w) {
+    if (mainCache.has(w.w)) return mainCache.get(w.w);
+    let best = null; let size = -1;
+    for (const it of Scene.parse(w.pic)) { if (it.k === 'e' && it.s > size) { size = it.s; best = it.e; } }
+    mainCache.set(w.w, best); return best;
+  }
   function distract(w, pool, n) {
     const all = A.words;
     const same = shuffle(all.filter((x) => x.c === w.c && x.w !== w.w));
     const other = shuffle(pool.filter((x) => x.w !== w.w && x.c !== w.c));
     const rest = shuffle(all.filter((x) => x.w !== w.w));
     const out = [];
-    for (const x of [...same.slice(0, 2), ...other, ...rest]) { if (out.length >= n) break; if (!out.includes(x) && x.pic !== w.pic) out.push(x); }
+    const mw = mainEmoji(w); const used = new Set([mw]);
+    for (const x of [...same.slice(0, 2), ...other, ...rest]) {
+      if (out.length >= n) break;
+      const mx = mainEmoji(x);
+      if (!out.includes(x) && x.pic !== w.pic && !used.has(mx)) { out.push(x); used.add(mx); }
+    }
     return out;
   }
 
