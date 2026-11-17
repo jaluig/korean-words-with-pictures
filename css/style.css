@@ -386,3 +386,7 @@ input:focus, select:focus { border-color: var(--pri); box-shadow: 0 0 0 3px var(
 .kb-k.on { background: var(--pri); color: #fff; }
 .kb-k.space { max-width: 220px; font-size: 14px; color: var(--ink3); }
 .kb-k.ok { max-width: 90px; background: var(--pri); color: #fff; font-size: 15px; font-weight: 700; }
+.typed { font-size: 18px; font-weight: 700; padding: 4px 14px; border-radius: 999px; margin-bottom: 8px; }
+.typed.ok { background: #dcfce7; color: #15803d; }
+.typed.no { background: #fee2e2; color: #b91c1c; }
+.study .show-btn.nosticky { position: static; }

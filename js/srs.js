@@ -5,7 +5,7 @@
   const MIN = 60 * 1000; const DAY = 24 * 60 * MIN; const DAY_START_HOUR = 4;
   const DEFAULTS = {
     newPerDay: 15, maxRev: 300, recog: true, prod: true, listen: false, autoplay: true, autoplayBack: false, newCats: [], newLv: [],
-    rate: 0.85, voice: '', anim: true, theme: 'auto', font: 'sans', learnSteps: [1, 10], relearnSteps: [10],
+    rate: 0.85, voice: '', anim: true, typeRev: false, theme: 'auto', font: 'sans', learnSteps: [1, 10], relearnSteps: [10],
     order: 'level', sfx: true, showAllSentences: true
   };
 

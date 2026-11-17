@@ -258,7 +258,7 @@
   /* ================= STUDY ================= */
   views.study = (app) => {
     const words = orderedWords();
-    let q = null; let cur = null; let flipped = false; let shownAt = 0; let doneCount = 0; let startTotal = 0;
+    let q = null; let cur = null; let flipped = false; let shownAt = 0; let doneCount = 0; let startTotal = 0; let typed = null;
     function build() { q = SRS.queue(words); startTotal = startTotal || (q.nw.length + q.learn.length + q.rev.length); }
     function pick() {
       build();
@@ -277,7 +277,7 @@
       return `<div class="cnts"><span class="c-n ${cur && !SRS.get(cur) ? 'cur' : ''}">${q.nw.length}</span><span class="c-l ${cur && SRS.get(cur) && /learn/.test(SRS.get(cur).s) ? 'cur' : ''}">${q.learn.length}</span><span class="c-r ${cur && SRS.get(cur) && SRS.get(cur).s === 'rev' ? 'cur' : ''}">${q.rev.length}</span></div>`;
     }
     function next() {
-      cur = pick(); flipped = false;
+      cur = pick(); flipped = false; typed = null;
       if (!cur) return finish();
       shownAt = Date.now();
       draw();
@@ -294,10 +294,13 @@
         body = isListen
           ? `<div style="margin:auto 0 10px"><button class="btn pri big listen-btn" data-say="${esc(w.w)}">🔊</button></div><div class="hint">듣고 그림을 떠올려 보세요 🎧</div>`
           : isRev
-          ? `<div class="pic-wrap" style="margin:auto 0 0">${pic(w)}</div>${clozeOf(w) ? `<div class="cloze">${clozeHTML(clozeOf(w), w.w)}</div>` : ''}<div class="hint">무슨 단어일까요?</div>`
+          ? `<div class="pic-wrap" style="margin:auto 0 0;${SRS.settings.typeRev ? 'width:min(70%,240px,30vh)' : ''}">${pic(w)}</div>${clozeOf(w) ? `<div class="cloze">${clozeHTML(clozeOf(w), w.w)}</div>` : ''}${SRS.settings.typeRev
+            ? `<div class="type-in" style="width:100%;margin-top:14px"><input type="text" id="sin" autocomplete="off" spellcheck="false" lang="ko" placeholder="한글로 쓰세요" ${localStorage.getItem('kwp-kb') !== '0' ? 'inputmode="none"' : ''}></div><div class="kb" id="skb" ${localStorage.getItem('kwp-kb') !== '0' ? '' : 'hidden'} style="width:100%"></div>`
+            : '<div class="hint">무슨 단어일까요?</div>'}`
           : `<div class="front-word">${esc(w.w)}</div><div>${speakBtn(w.w)}</div><div class="hint">이 단어의 그림은? 생각해 보세요 🤔</div>`;
       } else {
-        body = `<div class="back-word">${esc(w.w)} ${speakBtn(w.w, 'sm')}</div>
+        const tr = typed !== null ? (typed.replace(/\s+/g, '') === w.w.replace(/\s+/g, '') ? `<div class="typed ok">⭕ ${esc(typed)}</div>` : `<div class="typed no">❌ ${esc(typed || '…')}</div>`) : '';
+        body = `${tr}<div class="back-word">${esc(w.w)} ${speakBtn(w.w, 'sm')}</div>
           <div class="pic-wrap">${pic(w)}</div>
           <div class="sents">${sents.map((s) => `<div class="sline"><div class="sent">${sentHTML(s, w.w)}</div>${speakBtn(s, 'sm')}</div>`).join('')}</div>
           ${(SRS.state.notes || {})[w.w] ? `<div class="card-note">📝 ${esc(SRS.state.notes[w.w])}</div>` : ''}`;
@@ -312,15 +315,23 @@
             <button class="g2" data-g="2">어려움<small>${pv[1]}</small></button>
             <button class="g3" data-g="3">알맞음<small>${pv[2]}</small></button>
             <button class="g4" data-g="4">쉬움<small>${pv[3]}</small></button></div>`
-    : '<button class="btn pri big show-btn" data-show>정답 보기 <span class="kbd">Space</span></button>'}
+    : `<button class="btn pri big show-btn${SRS.settings.typeRev && isRev ? ' nosticky' : ''}" data-show>정답 보기 <span class="kbd">Space</span></button>`}
         <div class="row" style="justify-content:space-between;margin-top:12px">
           <button class="btn sm ghost" data-undo>↶ 되돌리기</button>
           <button class="btn sm ghost" data-info>ℹ︎ 단어 정보</button>
         </div>
       </div>`;
+      const sin = $('#sin');
+      if (sin) {
+        if (root.Hangul) root.Hangul.attach(sin, $('#skb'), { onenter: () => flip() });
+        sin.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); flip(); } });
+        setTimeout(() => sin.focus(), 50);
+      }
     }
     function flip() {
-      if (flipped) return; flipped = true; draw(SRS.settings.anim);
+      if (flipped) return;
+      const sin = $('#sin'); if (sin && typed === null) typed = sin.value.trim();
+      flipped = true; draw(SRS.settings.anim);
       const w = DICT.get(cur.split('|')[0]);
       if (cur.endsWith('|r') ? SRS.settings.autoplay : SRS.settings.autoplayBack) TTS.speak(cur.endsWith('|r') ? w.w : plain(w.ex[0] || w.w));
       if (cur.endsWith('|l') && !SRS.settings.autoplayBack) TTS.speak(w.w);
@@ -360,7 +371,7 @@
       if (e.target.closest('[data-info]')) { if (cur) openWord(cur.split('|')[0]); return; }
       if (e.target.closest('[data-more]')) { SRS.addExtraNew(10); next(); return; }
       const op = e.target.closest('[data-open]'); if (op) { openWord(op.dataset.open); return; }
-      if (!flipped && cur && e.target.closest('.card')) flip();
+      if (!flipped && cur && e.target.closest('.card') && !e.target.closest('.type-in, .kb')) flip();
     };
     const key = (e) => {
       if (e.target.matches('input, textarea, select') || !$('#modal').hidden) return;
@@ -496,6 +507,7 @@
       <div class="set-row"><label>하루 최대 복습<span class="sub">Max reviews per day</span></label><input type="number" min="10" max="9999" id="s-rev" value="${s.maxRev}" style="width:90px"></div>
       ${sw('recog', '단어 → 그림 카드', 'Recognition: see word, recall picture')}
       ${sw('prod', '그림 → 단어 카드', 'Production: see picture, recall word (unlocks after the first card is learned)')}
+      ${sw('typeRev', '그림 → 단어: 직접 쓰기', 'Type the answer on picture→word cards (built-in Hangul keyboard)')}
       ${sw('listen', '듣기 카드', 'Listening: hear the word, recall the picture (unlocks after the first card is learned)')}
       <div class="set-row" style="display:block"><label>새 단어 주제<span class="sub">Only introduce new words from these topics / levels (none selected = all)</span></label>
         <div class="chips" id="s-lv" style="margin-top:8px">${[...new Set(orderedWords().map((w) => w.l))].map((l) => `<span class="chip ${(s.newLv || []).includes(l) ? 'on' : ''}" data-lv="${l}">${l}단계</span>`).join('')}</div>
